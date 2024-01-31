@@ -59,6 +59,7 @@ CREATE TABLE rental (
     FOREIGN KEY (motor_id) REFERENCES motorcycles(motor_id),
     FOREIGN KEY (location_id) REFERENCES location(location_id),
     FOREIGN KEY (customer_id) REFERENCES customer(customer_tc)
+);
 
 CREATE TABLE invoice (
     invoice_id INT PRIMARY KEY,
@@ -142,7 +143,7 @@ FROM rental
 WHERE customer_id = @musteri_tc;
 
 /*yeni kiralama eklemek*/
-INSERT INTO rental (motor_id, location_id, customer_tc, rental_date, return_date, price, rental_days, total_price)
+INSERT INTO rental (motor_id, location_id, customer_id, rental_date, return_date, price, rental_days, total_price)
 VALUES (1, 2, 123456789, '2024-02-01', '2024-02-05', 100.00, 5, 500.00);
 
 
@@ -168,3 +169,29 @@ VALUES (1, 'admin', 'hashed_password_here', 'salt_here');
 /*Giriþ yapma:*/
 SELECT * FROM admin
 WHERE username = 'admin' AND password = 'hashed_password_input' AND salt = 'salt_input';
+
+/*Stok arttýrma*/
+DECLARE @motor_id INT = 1; -- Artýrýlacak aracýn ID'sini belirtin
+DECLARE @artirma_miktari INT = 1; -- Artýrýlacak miktarý belirtin
+
+UPDATE motorcycles
+SET stock = stock + @artirma_miktari
+WHERE motor_id = @motor_id;
+
+
+
+/*Stok azaltma*/
+
+DECLARE @kiralanan_miktar INT = 1; -- Kiralanan miktarý belirtin
+
+-- Kiralanan aracýn stoktan düþürülmesi
+UPDATE motorcycles
+SET stock = stock - @kiralanan_miktar
+WHERE motor_id = @motor_id;
+
+-- Kiralama iþleminin kaydedilmesi (rental tablosuna ekleme)
+INSERT INTO rental (motor_id, location_id, customer_id, rental_date, return_date, price, rental_days, total_price)
+VALUES (@motor_id);/* Diðer parametreleri burada belirtin */
+
+-- Kiralama iþlemi sonrasýnda stok durumunu kontrol edebilirsiniz
+SELECT * FROM motorcycles WHERE motor_id = @motor_id;
