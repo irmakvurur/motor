@@ -23,6 +23,8 @@ CREATE TABLE motorcycles (
     motor_model NVARCHAR(50),
     stock INT,
     price MONEY,
+	total_km_used INT,
+	current_km INT,
     motor_photo VARBINARY(max),
     motor_photo2 VARBINARY(max),
     motor_photo3 VARBINARY(max),
@@ -53,6 +55,7 @@ CREATE TABLE rental (
     customer_id INT,
     rental_date DATE,
     return_date DATE,
+	rental_distance INT,
     price MONEY,
     rental_days INT,
     total_price MONEY,
@@ -113,10 +116,46 @@ CREATE TABLE CustomerDiscounts (
     FOREIGN KEY (DiscountID) REFERENCES Discounts(Discount_id)
 );
 
+--cotogary ekle
+INSERT INTO category ( category_id,category_name)
+Values
+   (1,'racing'),
+   (2,'naked'),
+   (3,'touring');
+
+
+/*motor km*/
+
+-- Tabloları oluşturduktan sonra motorların verilerini ekleyin
+INSERT INTO motorcycles (motor_id, motor_brand, motor_model, stock, price, total_km_used, current_km, category_id)
+VALUES
+    (1, 'Yamaha', 'YZF R25', 2, 1000, 8000, 13000, 1),
+    (2, 'CF Moto', 'NK250', 1, 800, 4000,7000, 2),
+	(3, 'Bajaj', 'Model', 8, 12000, 0, 0, 2),
+	(4, 'Ducati', 'Model', 8, 12000, 0, 0, 2),
+	(5, 'Honda', 'Model', 8, 12000, 0, 0, 2),
+	(6, 'Kawasaki', 'Model', 8, 12000, 0, 0, 2),
+	(7, 'KTM', 'Model', 8, 12000, 0, 0, 2),
+	(8, 'Suzuki', 'Model', 8, 12000, 0, 0, 2),
+	(9, 'Triumph', 'Model', 8, 12000, 0, 0, 2),
+	(10, 'Aprilia', 'Model', 8, 12000, 0, 0, 2),
+	(11, 'BMW', 'Model', 8, 12000, 0, 0, 2);
+
+-- Motosikletin km bilgisini güncelle
+UPDATE motorcycles
+SET total_km_used = total_km_used + 50, -- Örnek: 50 km ekledik
+    current_km = 5000 -- Örnek: Güncel km bilgisi
+WHERE motor_id = 1; -- Örnek: motor_id 1 olan motosiklet
+
+-- Motosikletin km bilgisini al
+SELECT motor_id, current_km, total_km_used
+FROM motorcycles
+WHERE motor_id = 1;
+
 /*CUSTOMER TABLOSU*/
 SELECT * FROM customer;
 
-/*araba listeleme*/
+/*motor listeleme*/
 SELECT * FROM motorcycles;
 
 /*Kiralama geçmişini listele*/
@@ -124,7 +163,7 @@ SELECT rental.*, customer.customer_name, customer.customer_surname
 FROM rental
 JOIN customer ON rental.customer_id = customer.customer_tc;
 
-/*boş araç bulma*/
+/*boş motor bulma*/
 DECLARE @belirli_tarih DATE = '2024-02-01';
 
 SELECT *
@@ -195,3 +234,40 @@ VALUES (@motor_id);/* Diğer parametreleri burada belirtin */
 
 -- Kiralama işlemi sonrasında stok durumunu kontrol edebilirsiniz
 SELECT * FROM motorcycles WHERE motor_id = @motor_id;
+
+
+--motor markaları listeleme
+SELECT DISTINCT motor_brand
+FROM motorcycles;
+
+--belirli bir lokasyondaki stok durumu
+SELECT motor_brand, motor_model, stock
+FROM motorcycles
+JOIN rental ON motorcycles.motor_id = rental.motor_id
+JOIN location ON rental.location_id = location.location_id
+WHERE location.location_name = 'Belirli Lokasyon';
+
+
+--müşterinin kullandığı motorlar
+SELECT motor_brand, motor_model, rental_date, return_date
+FROM motorcycles
+JOIN rental ON motorcycles.motor_id = rental.motor_id
+JOIN customer ON rental.customer_id = customer.customer_tc
+WHERE customer.customer_tc = [customer_tc]
+
+
+--en fazla kiralanan motor markası
+SELECT TOP 1 motor_brand, COUNT(*) AS kiralama_sayisi
+FROM motorcycles
+JOIN rental ON motorcycles.motor_id = rental.motor_id
+GROUP BY motor_brand
+ORDER BY kiralama_sayisi DESC;
+
+
+--belirli bir tarihte kiralanabilir motorlar
+
+SELECT motorcycles.motor_id, motorcycles.motor_brand, motorcycles.motor_model, motorcycles.stock
+FROM motorcycles
+LEFT JOIN rental ON motorcycles.motor_id = rental.motor_id
+WHERE rental.rental_id IS NULL 
+    OR (rental.rental_date > '2024-02-01' OR rental.return_date < '2024-02-01');
